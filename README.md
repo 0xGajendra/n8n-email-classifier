@@ -17,6 +17,8 @@ This project implements an **automated email categorization system** leveraging 
 ---
 
 ## File Structure
+```
+
 ├── backend/
 │   ├── server.js               # Express backend server
 │   ├── routes/
@@ -40,6 +42,7 @@ This project implements an **automated email categorization system** leveraging 
 │
 ├── README.md                   # This documentation file
 └── SETUP.md                    # Step-by-step setup guide for n8n and project
+```
 
 ---
 
