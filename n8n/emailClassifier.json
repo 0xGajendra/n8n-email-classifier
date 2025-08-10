@@ -1,0 +1,210 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            },
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a35aa47b-57c2-4c04-90b6-5dc67e1fb62b",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DppQu3feltlyK6X5",
+          "name": "Gajendra"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are a helpful assistant",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an intelligent email classification assistant. Your task is to analyze the following email and determine which of the following categories it belongs to:\n\ncustomer-support\n\nspam\n\npromotional\n\nnewsletter\n\nsocial\n\npersonal\n\nimportant\n\nConsider the sender, subject, and email body content. Be objective and accurate. Respond with only the most appropriate category name from the list above.\n\nEmail Data:\n\nSubject: {{ $json.Subject }}\nSender: {{ $json.From }}\nBody:{{ $json.snippet }}\n\nlabels from gmail: {{ $json.labels }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "40fc046a-7ea7-40ff-a3cb-f69247ea8b5c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "653a41c6-6680-4d81-9853-2b447fdce620",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zBCnsyvtLMGbyLOR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Subject\": \"subject\",\n\"Sender\": \"sender\",\n\"Body\": \"body\",\n\n\"Category\": \"spam\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        192
+      ],
+      "id": "e9228597-df4f-494c-b533-2a41225b761d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "emails",
+        "fields": "=subject, sender, body, category",
+        "options": {
+          "useDotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        16
+      ],
+      "id": "c3c19d7b-c821-44a9-b41b-07d709709461",
+      "name": "MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "SEXni32amhVTBkDn",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d92be1d-8f80-413a-9f78-837f015668e5",
+              "name": "subject",
+              "value": "={{ $json.output.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "0696a06a-d0bc-4e2a-926d-6e9f2d39320c",
+              "name": "sender",
+              "value": "={{ $json.output.Sender }}",
+              "type": "string"
+            },
+            {
+              "id": "a5733429-d965-4a7e-bd22-f55e3cf8aab6",
+              "name": "body",
+              "value": "={{ $json.output.Body }}",
+              "type": "string"
+            },
+            {
+              "id": "b98b3cfe-937a-4d06-8e3a-812ec6cb637c",
+              "name": "category",
+              "value": "={{ $json.output.Category }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "17bcfe48-24f6-40c0-9d9b-6a6503054958",
+      "name": "Set Values"
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Values": {
+      "main": [
+        [
+          {
+            "node": "MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "504280dcc22fb11db39fc314283bb0739c22af5dff145b07d41c11f3d294443d"
+  }
+}
